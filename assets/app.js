@@ -3,13 +3,13 @@
 //  (firebase.google.com > seu projeto > configurações)
 // ═══════════════════════════════════════════════════
 const FIREBASE_CONFIG = {
-  apiKey:            "",
-  authDomain:        "",
-  databaseURL:       "",   // ex: https://PROJETO-default-rtdb.firebaseio.com
-  projectId:         "",
-  storageBucket:     "",
-  messagingSenderId: "",
-  appId:             ""
+  apiKey:            "AIzaSyDzJARamoxx52ORfQAvqlJfaWRoQt_yUQo",
+  authDomain:        "ns-criacao.firebaseapp.com",
+  databaseURL:       "https://ns-criacao-default-rtdb.firebaseio.com",
+  projectId:         "ns-criacao",
+  storageBucket:     "ns-criacao.firebasestorage.app",
+  messagingSenderId: "825541864828",
+  appId:             "1:825541864828:web:a69f05a473e916f35f08f9"
 };
 const FB_PATH = "demandas"; // chave no Realtime Database
 
