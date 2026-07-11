@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Gestão de Demandas</title>
+<link rel="stylesheet" href="assets/styles.css"/>
+</head>
+<body>
+
+<!-- ═══ THEME TOGGLE (fixed top-right) ═══ -->
+<button class="theme-fab" id="btnTheme" onclick="toggleTheme()" title="Alternar tema">
+  <svg id="themeIcon" width="16" height="16" viewBox="0 0 14 14" fill="none">
+    <path d="M8 2a5.5 5.5 0 1 0 4 4.5 4 4 0 0 1-4-4.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>
+  </svg>
+</button>
+
+<!-- ═══ SETUP SCREEN ═══ -->
+<div id="setupScreen" class="hidden">
+  <div class="setup-box">
+    <h2>Configurar sincronização</h2>
+    <p>Para que todo o time veja os mesmos dados em tempo real, conecte um banco Firebase gratuito. Leva 3 minutos.</p>
+    <div class="setup-steps">
+      <div class="setup-step">
+        <div class="setup-n">1</div>
+        <p>Acesse <code>console.firebase.google.com</code>, crie um projeto gratuito e ative o <strong>Realtime Database</strong> no modo de teste.</p>
+      </div>
+      <div class="setup-step">
+        <div class="setup-n">2</div>
+        <p>Em <code>Configurações do projeto → Seus apps</code>, copie o <code>apiKey</code> e a <code>databaseURL</code>.</p>
+      </div>
+      <div class="setup-step">
+        <div class="setup-n">3</div>
+        <p>Abra o arquivo <code>assets/app.js</code> e preencha o objeto <code>FIREBASE_CONFIG</code> com todos os valores. Depois suba no GitHub.</p>
+      </div>
+    </div>
+    <button class="btn-setup" onclick="saveSetupConfig()">Copiar meus dados para a área de transferência</button>
+    <button class="setup-skip" onclick="skipSetup()">Usar sem sincronização (dados ficam só neste navegador)</button>
+  </div>
+</div>
+
+<!-- ═══ SYNC BANNER ═══ -->
+<div id="syncBanner" class="hidden">
+  <span class="sync-dot ok"></span>
+  <span class="sync-label">Sincronizado</span>
+</div>
+
+<!-- ═══ HEADER ═══ -->
+<div class="hdr">
+  <div class="hdr-inner">
+
+    <div class="logo-strip">
+      <!-- naSala -->
+      <svg viewBox="100 30 970 380" height="18" xmlns="http://www.w3.org/2000/svg"><path d="M573.5,269.15c-.78,2.93,0,5.18,1.62,7.22,3.17,3.99,7.47,5.71,12.4,5.91,16.68.66,31.32-16.26,29.16-33.19-2.37-18.55-10.03-35.13-18.57-51.38-3.74-7.11-8.08-13.89-12.08-20.87-1.21-2.11-2.08-2.68-4.02-.48-35.48,40.14-71.72,79.57-109.27,117.79-22.3,22.7-44.85,45.13-69.7,65.08-7.55,6.07-15.28,11.97-24.65,15.16-3.08,1.05-6.2,1.45-9.42,1.27-6.57-.36-10.77-5.79-9.48-12.25,1.28-6.39,6.76-11.7,13.2-12.84,3.56-.63,5.76,1.03,6.79,4.22,2.19,6.8,3.61,7.92,10.58,2.91,8.09-5.82,15.29-12.69,22.4-19.62,35.75-34.85,69.57-71.54,103.16-108.45,18.54-20.37,36.93-40.89,55.41-61.32,3.96-4.38,4-4.37,1.1-9.49-10.62-18.76-20.16-38.02-26.5-58.7-2.88-9.41-5.2-18.96-4.63-28.9.53-9.16,3.28-17.21,12.27-21.66,5.75-2.84,9.47-2.4,14.27,1.85,5.64,5,9.75,11.22,13.82,17.47,6.96,10.7,13.18,21.89,21.45,31.7,1.99,2.36,4.16,4.52,6.64,6.37,7.58,5.65,14.62,4.73,20.3-2.9,5.13-6.9,7.23-15.1,9.11-23.28,2.33-10.13,4.28-20.34,6.49-30.49,1.35-6.2,3.84-11.94,8.04-16.78,6.23-7.2,13.17-9.26,19.69-5.98,7.68,3.87,11.13,11.58,9.09,20.65-2.38,10.61-8.1,19.61-14.11,28.41-13.52,19.76-29.49,37.55-45.37,55.39-8.96,10.07-17.88,20.17-26.94,30.15-1.79,1.97-1.73,3.39-.36,5.53,12.41,19.36,23.41,39.44,30.79,61.33,2.73,8.09,4.73,16.38,5.16,24.92,1.06,20.94-13.07,38.61-34.65,43.6-8.5,1.97-16.89,1.9-25.05-1.52-7.71-3.23-12.47-8.95-13.5-17.28-1.02-8.28,2.5-14.77,9.08-19.58,5.17-3.77,10.94-6.08,17.49-5.89,2.53.08,4.92.7,7.06,2.08,5.09,3.28,5.64,9.44,1.25,13.57-5.17,4.86-12.4,5.04-19.5.26ZM555.45,81.99c.3,2.01.56,5.08,1.25,8.05,5.11,21.94,16.05,41.28,27.18,60.53,1,1.72,1.97,1.73,3.25.29,7.76-8.75,15.54-17.48,23.34-26.2,1.05-1.18,1.07-1.86-.54-2.58-10.58-4.7-17.89-12.92-23.91-22.47-4.47-7.09-8.8-14.28-13.31-21.36-2.16-3.39-4.63-6.57-7.78-9.15-2.01-1.65-3.77-1.49-5.58.38-3.13,3.23-3.7,7.25-3.9,12.51ZM647.56,87c8.57-12.86,17.31-25.61,22.16-40.48.47-1.43.5-3.02.56-4.55.07-1.59-.25-3.15-1.98-3.81-1.63-.62-2.99.05-4.21,1.13-1.89,1.68-3.2,3.77-4.31,6.01-6.51,13.16-9.33,27.42-12.23,41.69Z"/><path d="M162.76,254.55c4.47-3.12,8.61-6.04,12.78-8.92,14.01-9.7,28.22-19.08,43.19-27.24,5.82-3.17,11.72-6.2,18.22-7.76,6.62-1.59,11.67,1.57,13.32,8.22,1.77,7.12-.03,14.09-.96,21.09-1.04,7.89-1.17,15.81.32,23.64,2.41,12.68,9.92,17.56,22.58,14.84,10.08-2.16,19.27-6.41,27.64-12.39,21.91-15.64,44.71-29.73,69.89-39.59,9.29-3.64,18.86-6.17,28.83-7.09,2.86-.26,5.66,0,8.47.51,7.62,1.38,10.87,6.38,9.02,13.93-1.06,4.34-3.26,8.11-6.11,11.49-1.46,1.73-2.1,3.6-2.12,5.83-.03,4.37-.07,8.73.73,13.07,1.81,9.83,7.41,16.08,17.05,18.79,5.17,1.45,10.47,1.54,15.9,2.07-7.08,5.22-14.92,7.98-23.74,6.56-14.79-2.39-21.95-11.59-25.45-32.08-1.5-.27-2.25,1.01-3.23,1.69-23.37,16.18-49.03,26.91-76.89,32.44-4.2.83-8.52.77-12.73.23-4.63-.59-8.73-2.42-10.44-7.32-.89-2.56-2.27-.84-3.31-.37-7.45,3.4-15.06,6.2-23.2,7.52-11.53,1.87-21.18-2.74-26.67-13.06-4.49-8.44-5.89-17.68-6.43-27.04-.49-8.62-.21-17.25,1.03-25.82.06-.44-.05-.9-.07-1.27-.94-.42-1.53.05-2.12.42-16.73,10.5-33.57,20.84-49.1,33.1-8.42,6.65-14.95,15.1-21.94,23.12-4.25,4.88-9.44,7.81-16.16,7.32-4.87-.35-6.99-2.6-6.95-7.51.03-5.21,1.94-9.98,3.97-14.61,6.58-15.06,13.47-29.98,20.05-45.03,2.51-5.73,4.86-11.56,6.18-17.71.85-3.93-.81-5.47-4.64-4.17-5.41,1.83-10.3,4.75-15.15,7.71-20.13,12.28-39.36,25.8-56.98,41.53-2.3,2.05-4.47,4.21-6.42,6.61-1.39,1.7-1.51,3.13.37,4.49.1.07.18.15.27.23,1.8,1.79,4.63,3.19,3.83,6.27-.81,3.08-3.94,3.54-6.5,4.22-3.76,1-7.58,1.94-11.54,1.6-5.94-.5-8.56-4.49-6.7-10.17,1.1-3.34,3.1-6.17,5.77-8.37,27.6-22.7,55.84-44.54,86.39-63.21,4.54-2.78,9.36-5.05,14.44-6.73,2.88-.95,5.75-1.29,8.7-.41,3.19.96,5.27,2.9,6.08,6.26,1.16,4.8.42,9.41-1.07,13.95-5.04,15.41-11.43,30.3-17.63,45.26-.43,1.04-1.31,1.98-.79,3.85ZM320.64,277.51c1.38-.2,3.29-.31,5.1-.78,23.1-5.91,43.86-16.57,62.64-31.15,1.84-1.43,3.45-3.25,4.87-5.11,3.43-4.48,2.52-6.95-2.88-8.33-5.03-1.28-9.88-.21-14.6,1.35-15.97,5.29-29.96,14.38-43.98,23.36-5.57,3.57-10.79,7.67-15.17,12.69-1.5,1.72-3.73,3.55-2.56,6.1,1.14,2.48,3.91,1.58,6.57,1.86Z"/><path d="M788.22,232.36c-.11-.33-.36-.67-.3-.94,1.5-7.13-3.02-10.57-11.19-11.1-9.77-.64-18.97,2.13-27.99,5.45-20.67,7.6-39.6,18.5-57.7,30.9-8.39,5.75-16.65,11.72-23.62,19.21-1.47,1.58-4.2,3.41-2.85,5.52,1.5,2.35,4.38.55,6.44-.25,13.49-5.24,25.95-12.54,38.69-19.3,14.2-7.53,27.42-16.84,42.3-23.12,4.03-1.7,8.1-3.31,12.38-4.31,1.87-.44,3.76-.54,5.64-.31,4.07.51,5.96,3.28,5.05,7.27-.96,4.24-3.33,7.8-5.54,11.43-3.56,5.85-7.77,11.32-10.74,17.53-1.49,3.12-3.31,6.61-.73,9.62,2.52,2.94,6.33,2.67,9.94,1.78,5.66-1.41,10.93-3.84,16.15-6.34,17.83-8.56,34.78-18.68,51.8-28.7,2.5-1.47,2.99-3.79,3.71-6.13,5.3-17.3,10.93-34.5,19.23-50.65,8.25-16.05,17.83-31.23,31.07-43.75,6.87-6.49,14.53-11.74,23.97-13.85,5.66-1.26,11.28-1.08,16.77.8,7.58,2.59,10.77,8.24,9.2,16.08-1.44,7.21-4.92,13.51-8.84,19.6-8.69,13.48-19.23,25.46-30.26,37.02-13.88,14.55-28.34,28.51-43.6,41.63-2.08,1.79-3.31,3.83-3.77,6.56-3.52,20.67,2.55,37.76,18.92,51.04,3.25,2.63,7.09,4.1,11.08,5.43-3.32.95-6.65.79-9.94.29-16.86-2.56-27.19-12.76-32.75-28.33-2.28-6.37-3.62-12.96-3.85-19.75-.03-.91.4-2.13-.51-2.63-1.12-.62-1.93.57-2.76,1.12-14.53,9.58-29.49,18.42-45.49,25.36-8.48,3.68-17.14,6.74-26.41,7.84-3.61.43-7.11.15-10.54-.72-7.38-1.87-11.26-7.82-10.43-15.47.91-8.39,4.15-15.96,8.03-23.31.66-1.25,1.36-2.47,2.15-3.92-1.41-.2-2.11.69-2.93,1.19-22.52,13.76-45.25,27.1-69.97,36.65-6.85,2.65-13.86,4.74-21.19,5.64-3.49.43-6.88.16-10.08-1.24-5.07-2.22-6.11-5.95-2.95-10.48,3.89-5.58,8.82-10.18,13.99-14.53,27.73-23.33,57.93-42.54,92.42-54.33,12.05-4.12,24.43-6.58,37.27-3.93,2.1.43,4.13,1.06,5.96,2.19,3.62,2.24,4.74,5.36,3.41,9.42-1.29,3.94-5.25,8.94-8.62,10.82ZM859.64,229.68c.92.22,1.25-.37,1.64-.74,19.25-18.54,37.94-37.59,54.03-59.01,3.62-4.81,7.01-9.83,8.96-15.62,1.74-5.16.18-7.66-5.19-8.35-1.26-.16-2.6-.02-3.86.22-8.58,1.59-14.42,7.29-19.72,13.58-9.6,11.39-16.51,24.45-22.78,37.85-4.89,10.46-9.37,21.09-13.09,32.07Z"/><path d="M1004.17,253.92c-11.25,6.5-22.06,12.59-33.17,18.09-16.22,8.03-32.6,15.69-50.25,20.18-5.64,1.44-11.35,2.19-17.2,1.92-2.66-.12-5.13-.74-7.5-1.89-7.17-3.5-8.92-9.1-4.91-16.05,3.61-6.27,8.9-11.02,14.54-15.36,20.71-15.92,43.84-27.4,68.08-36.82,9.93-3.86,20.05-7.18,30.63-8.72,7.32-1.06,14.64-.83,21.69,1.8,7.53,2.81,10.05,8.21,7.41,15.76-1.59,4.54-4.38,8.34-7.39,12.01-5.56,6.79-4.73,15.07,2.18,20.59,6.61,5.28,14.52,7.27,22.69,8.31,13.45,1.71,26.88.52,40.32-.54,19.32-1.52,38.5-4.15,57.66-6.99,21.75-3.22,43.24-7.78,64.69-12.56,7.29-1.62,14.66-2.55,22.15-1.89,1.17.1,2.35.27,3.49.56,2.96.76,5.79,1.85,6.17,5.43.38,3.66-1.7,6.01-4.7,7.65-2.78,1.53-6.01,2.5-8.9,1.43-12.67-4.67-24.86-.8-37.32,1.13-33.95,5.27-67.66,12.18-101.84,15.95-13.74,1.51-27.52,2.73-41.38,2.24-6.15-.22-12.28-.81-18.24-2.38-15.4-4.06-26.29-12.65-28.89-29.88ZM914.12,284.61c3.37-.03,6.55-.95,9.66-2.09,27.36-10.03,52.8-23.67,76.28-40.91,2.27-1.67,4.36-3.63,6.34-5.65,1.36-1.39,3.23-3.05,2.33-5.18-.89-2.11-3.32-1.88-5.31-2-3.46-.2-6.85.34-10.18,1.16-25.47,6.3-48.38,18.08-69.88,32.82-5.27,3.61-10.3,7.59-14.01,12.91-1.37,1.97-2.56,4.14-1.15,6.57,1.31,2.26,3.6,2.42,5.92,2.36Z"/></svg>
+      <div class="ldiv"></div>
+      <!-- NSco. -->
+      <svg viewBox="1520 30 490 345" height="15" xmlns="http://www.w3.org/2000/svg"><path d="M1995.77,363.78h-473.29V37.93h473.29v325.85ZM1533.84,352.41h450.56V49.3h-450.56v303.12Z"/><polygon points="1608.3 321.72 1584.44 187.55 1583.75 187.55 1583.75 321.72 1555.05 321.72 1555.05 80.01 1593.08 80.01 1614.53 210.03 1614.87 210.03 1614.87 80.01 1646 80.01 1646 321.72 1608.3 321.72"/><path d="M1698.89,177.18v-57.41c0-4.84-.34-8.24-1.03-10.2-.69-1.95-1.96-2.94-3.81-2.94h-.69c-1.85,0-3.11.98-3.81,2.94-.69,1.96-1.03,5.48-1.03,10.55v25.59c0,7.84,1.09,14.76,3.29,20.75,2.19,6,4.95,11.58,8.29,16.77,3.34,5.18,6.92,10.08,10.72,14.7,3.81,4.61,7.37,9.51,10.72,14.7,3.34,5.18,6.11,10.83,8.29,16.94,2.19,6.11,3.29,13.09,3.29,20.92v36.3c0,6.46-.98,12.05-2.93,16.77-1.96,4.73-4.62,8.59-7.96,11.58-3.34,3-7.2,5.19-11.59,6.57-4.37,1.38-8.87,2.08-13.48,2.08h-5.88c-4.62,0-9.11-.69-13.49-2.08-4.38-1.38-8.3-3.57-11.76-6.57-3.46-2.99-6.28-6.85-8.47-11.58-2.2-4.72-3.29-10.31-3.29-16.77v-62.58h31.11v57.4c0,4.84.58,8.3,1.73,10.37,1.15,2.08,2.76,3.11,4.84,3.11h.7c2.08,0,3.63-1.04,4.66-3.11,1.04-2.08,1.55-5.53,1.55-10.37v-25.94c0-7.83-1.09-14.75-3.29-20.75-2.19-5.99-4.95-11.52-8.29-16.6-3.35-5.07-6.92-9.91-10.72-14.53-3.81-4.61-7.38-9.51-10.72-14.7-3.34-5.19-6.11-10.77-8.29-16.77-2.2-5.99-3.29-13.02-3.29-21.09v-36.31c0-6.45,1.03-12.04,3.11-16.77,2.08-4.72,4.84-8.58,8.3-11.58,3.45-2.99,7.32-5.18,11.58-6.57,4.26-1.39,8.7-2.08,13.32-2.08h3.45c4.61,0,9.05.69,13.32,2.08,4.26,1.38,8.06,3.57,11.41,6.57,3.33,3,6.05,6.87,8.13,11.58,2.06,4.73,3.11,10.32,3.11,16.77v62.25h-31.13Z"/><path d="M1810.58,323.8c-4.62,0-9.06-.69-13.32-2.08-4.26-1.38-8.07-3.57-11.41-6.57-3.34-2.99-6.05-6.85-8.13-11.58-2.08-4.72-3.11-10.31-3.11-16.77V114.93c0-6.45,1.03-12.04,3.11-16.77,2.08-4.72,4.78-8.58,8.13-11.58,3.34-2.99,7.15-5.18,11.41-6.57,4.26-1.39,8.7-2.08,13.32-2.08h6.92c4.37,0,8.76.69,13.13,2.08,4.38,1.38,8.25,3.57,11.59,6.57,3.34,3,6.05,6.87,8.13,11.58,2.08,4.73,3.11,10.32,3.11,16.77v62.25h-34.23v-57.41c0-4.84-.34-8.24-1.03-10.2-.69-1.95-1.96-2.94-3.81-2.94h-.69c-1.85,0-3.11.98-3.81,2.94-.69,1.96-1.03,5.48-1.03,10.55v161.48c0,4.84.34,8.3,1.03,10.37.7,2.08,1.95,3.11,3.81,3.11h.69c1.84,0,3.12-1.04,3.81-3.11.69-2.08,1.03-5.53,1.03-10.37v-57.75h34.23v62.93c0,6.46-1.03,12.05-3.11,16.77-2.08,4.73-4.78,8.59-8.13,11.58-3.34,3-7.2,5.19-11.59,6.57-4.37,1.38-8.76,2.08-13.13,2.08h-6.92Z"/><path d="M1937.45,98.14c-2.05-4.66-4.77-8.53-8.07-11.59-3.41-2.96-7.27-5.12-11.59-6.59-4.43-1.36-8.75-2.05-13.19-2.05h-6.93c-4.55,0-8.98.68-13.3,2.05-4.21,1.48-8.07,3.64-11.37,6.59-3.3,3.07-6.02,6.93-8.18,11.59-2.05,4.77-3.07,10.34-3.07,16.82v171.87c0,6.37,1.02,12.05,3.07,16.71,2.16,4.77,4.89,8.64,8.18,11.59,3.3,3.07,7.16,5.23,11.37,6.59,4.32,1.36,8.75,2.05,13.3,2.05h6.93c4.43,0,8.75-.68,13.19-2.05,4.32-1.36,8.18-3.52,11.59-6.59,3.3-2.96,6.02-6.82,8.07-11.59,2.16-4.66,3.18-10.34,3.18-16.71V114.97c0-6.48-1.02-12.05-3.18-16.82ZM1906.31,281.61c0,4.89-.34,8.3-1.02,10.34-.68,2.16-1.93,3.18-3.75,3.18h-.68c-1.82,0-3.18-1.02-3.86-3.18-.68-2.05-1.02-5.46-1.02-10.34V120.08c0-8.98,1.59-13.41,4.89-13.41h.68c3.18,0,4.77,4.43,4.77,13.41v161.52Z"/><path d="M1960.93,297.95c3.15,0,5.9,1.16,8.27,3.47,2.31,2.31,3.47,5.12,3.47,8.41s-1.16,6.1-3.47,8.42c-2.36,2.31-5.17,3.47-8.41,3.47s-6.05-1.16-8.41-3.47c-2.31-2.36-3.47-5.17-3.47-8.42s1.16-6.15,3.47-8.41c2.41-2.31,5.26-3.47,8.56-3.47Z"/></svg>
+      <div class="ldiv"></div>
+      <!-- nSeventos -->
+      <svg viewBox="2390 55 985 325" height="15" xmlns="http://www.w3.org/2000/svg"><path d="M2516.44,272.89s-11.75,6.34-22.57,7.67c-35.25,4.29-25.19-56.58-25.19-56.58,0,0-24.71,14.94-39.55,25.91-19.42,14.35-21,26.71-32.24,27.89-14.18,1.5-6.25-12.62-5.86-15.93,0,0,18.26-39.51,19.05-42.63.78-3.11,6.65-14.35,1.95-15.13-4.69-.79-28.32,14.73-41.12,23.98-12.79,9.25-30.17,23.65-27.94,25.57,2.24,1.92,13.28,8-6.25,10.58-12.01,1.57-11.17-8.08-4.11-14.45,13.39-12.06,51.88-39.41,51.88-39.41,0,0,26.76-19.44,36.04-18.83,7.12.45,8.21,5.08,7.43,12.35-.78,7.28-17.88,46.59-17.88,46.59,0,0,55.81-40.73,67.48-37.93,13.18,3.16,3.51,26.5,5.09,31.65,0,0-2.06,24,12.76,24.96,11.6.76,27.18-8.25,30.7-11.22"/><path d="M2643.91,214.5c5.98,14.56,9.88,29.89,6.59,41.01-9.1,30.76-56.17,33.48-58.72,8.93-1.05-10.23,7.47-18.02,18.14-20.06.62-.19,11.08-1.55,12.53,6.37.72,3.99-3.29,7.88-8.6,8.63-4.33.61-8.24-.99-9.87-3.78-4.09,9.31,14.93,21.83,32.1,2.09,8-9.18,3.7-26.86-3.24-43.21h11.07ZM2580.27,214.5c-41.05,44.66-108.96,116.02-134.06,127.32-22.91,10.33-24.09-14.18-7.98-17.63,6.97-1.49,4.48,8.95,9.37,8.51,9.7-.86,74.77-70.43,118.42-118.21h14.25Z"/><path d="M2636.6,136.52c-6.01-1.98-12.87-6.63-19.38-15.59-6.65-9.14-18.15-33.07-23.65-29.5-17.29,11.25,20.37,70.54,20.37,70.54,0,0,22.96-25.35,22.66-25.45M2664.35,109.84s29.88-42.52,17.48-43.37c-9.47-.64-17.41,43.29-17.48,43.37M2566.02,214.5c22.91-25.07,39.9-44.14,39.9-44.14,0,0-51.93-84.02-15.09-94.87,17.25-5.09,36.94,68.18,58.47,47.93,9.75-9.17,11.73-38.34,15.78-50.32,4.05-11.99,16.13-22.38,26.3-10.46,8.26,9.69-.92,28.32-30.18,62.57-9.21,10.77-40.9,45.83-40.9,45.83,0,0,14.32,20.78,23.62,43.45h-11.07c-8.08-19.04-19.75-36.29-19.75-36.29,0,0-13.4,15.16-32.81,36.29h-14.25Z"/><path d="M2937.89,195.61h49.27v-25.46h-79.55v102.45h79.55v-25.46h-49.27v-13.41h42.19v-24.41h-42.19v-13.71ZM2902.03,170.15h-33.44l-25.46,63.43-25.31-63.43h-33.6l42.63,103.06h32.54l42.63-103.06ZM2732.84,195.61h49.27v-25.46h-79.55v102.45h79.55v-25.46h-49.27v-13.41h42.19v-24.41h-42.19v-13.71Z"/><path d="M3094.58,170.15h-30.43v49.27l-42.64-49.27h-23.65v102.45h30.29v-48.36l42.79,48.36h23.65v-102.45ZM3194.31,196.51v-26.36h-91.3v26.36h30.43v76.09h30.43v-76.09h30.43Z"/><path d="M3250.06,246.38c-14.32,0-24.41-11.6-24.41-25.01s10.09-25.01,24.41-25.01,24.41,11.6,24.41,25.01-10.1,25.01-24.41,25.01M3250.06,167.89c-32.4,0-55.29,23.21-55.29,53.49s22.9,53.49,55.29,53.49,55.29-23.21,55.29-53.49-22.9-53.49-55.29-53.49"/><path d="M3356.87,167.89c-24.85,0-42.18,12.66-42.18,34.35,0,16.43,9.79,25.16,29.98,30.29l17.17,4.22c6.63,1.5,7.99,3.76,7.99,6.33,0,3.76-3.32,6.47-11,6.47-9.79,0-16.27-3.91-17.78-11.45h-30.58c3.16,28.63,27.27,36.76,47.91,36.76,27.42,0,44.9-12.95,44.9-34.2,0-18.38-12.65-25.92-29.98-30.13l-16.73-4.07c-5.57-1.2-8.28-2.86-8.28-6.93,0-4.52,4.36-6.93,10.39-6.93,7.99,0,11.75,4.06,13.11,10.09h30.59c-2.72-29.08-29.38-34.81-45.5-34.81"/></svg>
+      <div class="ldiv"></div>
+      <!-- cidade -->
+      <svg viewBox="3690 148 620 140" height="12" xmlns="http://www.w3.org/2000/svg"><path d="M3718.69,217.27c-3.3-23.19,4.6-39.47,14.37-49.98,1.39-1.49-.1-3.84-2.05-3.25-25.67,7.81-42.49,33.46-38.45,60.8,4.4,30.27,30.01,51.48,60.28,47.08,10.51-1.5,18.75-6.02,24.02-12.43,1.21-1.47-.2-3.62-2.06-3.16-28.14,6.99-52.05-10.45-56.11-39.05"/><path d="M3762.34,196.15c9.51,0,17.16-7.66,17.16-17.07s-7.65-17.07-17.16-17.07-17.07,7.66-17.07,17.07,7.66,17.07,17.07,17.07"/><path d="M3827.04,270.82l.4-.32,7.29-5.96c.91-.74.98-2.11.15-2.94l-6.86-6.86c-.37-.37-.58-.88-.58-1.4v-89.26c0-1.6-1.8-2.55-3.12-1.63l-23.13,16.07c-.53.37-.85.98-.85,1.63v88.69c0,1.1.89,1.99,1.99,1.99h24.72Z"/><path d="M3906.12,162.94c-2-.42-3.23,2.09-1.71,3.44,8.19,7.26,17.87,22.13,17.87,50.97,0,32.53-18.13,45.17-29.49,51.33-1.86,1.01-1.07,3.84,1.04,3.73,27.37-1.35,59.15-10.57,59.15-55.06,0-29.6-26.21-50.1-46.87-54.42"/><path d="M4075.08,161.98l-.4.32-8.42,6.89c-.3.25-.33.7-.05.98l8.28,8.28c.12.12.19.29.19.47v92.34c0,.53.6.85,1.04.54l25.78-17.91c.18-.12.28-.33.28-.54v-90.71c0-.37-.3-.66-.66-.66h-26.05Z"/><path d="M4114.61,162.2c-.68-.05-.98.83-.42,1.21,8.61,5.76,21.7,20.4,21.7,53.95,0,38.12-24.89,48.93-34.62,54-.62.32-.38,1.26.32,1.25,28.46-.38,65-7.53,65-55.24,0-32.12-30.85-53.52-52-55.16"/><path d="M4251.29,270.56v-20.7c0-1.68-1.96-2.6-3.26-1.53l-24.83,20.7c-1.43,1.19-.59,3.51,1.27,3.51h24.83c1.1,0,1.99-.89,1.99-1.99"/><path d="M4223.2,165.62l24.83,20.7c1.29,1.08,3.26.16,3.26-1.53v-20.7c0-1.1-.89-1.99-1.99-1.99h-24.83c-1.86,0-2.7,2.32-1.27,3.51"/><path d="M4232.19,214.05c1.25-1.25.37-3.39-1.4-3.39h-17.02l-.25-.68v-45.91c0-1.1-.89-1.99-1.99-1.99h-24.72l-.4.32-7.3,5.96c-.91.74-.98,2.11-.15,2.94l6.86,6.85c.37.37.58.88.58,1.41v89.26c0,1.6,1.8,2.55,3.12,1.63l23.13-16.07c.53-.37.85-.98.85-1.63v-20.64l.25.34,18.42-18.41Z"/><path d="M4002.9,165.53l-12.99,25.61c-.29.56-.29,1.23,0,1.79l39.65,78.53c.34.67,1.02,1.09,1.77,1.09h25.99c1.48,0,2.44-1.56,1.77-2.88l-52.65-104.14c-.73-1.45-2.81-1.45-3.54,0"/><path d="M3956.93,272.56h23.89c1.48,0,2.44-1.56,1.77-2.88l-11.93-23.59c-.73-1.45-2.81-1.45-3.54,0l-11.97,23.59c-.67,1.32.29,2.89,1.77,2.89"/><path d="M3861.47,161.98l-.4.32-7.29,5.96c-.91.74-.98,2.11-.15,2.94l6.86,6.86c.37.37.58.88.58,1.4v89.26c0,1.6,1.8,2.55,3.12,1.63l23.13-16.07c.53-.37.85-.98.85-1.63v-88.69c0-1.1-.89-1.99-1.99-1.99h-24.72Z"/></svg>
+    </div>
+
+    <div class="hdr-row">
+      <div>
+        <div class="title-wrap">
+          <span class="title-display" id="titleDisplay">Gestão de Demandas</span>
+          <input class="title-input" id="titleInput" type="text" onblur="saveTitleEdit()" onkeydown="if(event.key==='Enter')saveTitleEdit()"/>
+          <button class="icon-btn" onclick="startTitleEdit()" title="Editar título">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="sub" id="sub">—</div>
+      </div>
+      <div class="hdr-btns">
+        <button class="pill-btn" id="btnHide" onclick="toggleHide()">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 6.5s2-4 5.5-4 5.5 4 5.5 4-2 4-5.5 4-5.5-4-5.5-4z" stroke="currentColor" stroke-width="1.1"/><line x1="2" y1="11" x2="11" y2="2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+          Ocultar concluídas
+        </button>
+        <button class="pill-btn" onclick="openWorkload()" title="Carga de trabalho">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="7" width="2.5" height="5" rx=".5" fill="currentColor"/><rect x="5.25" y="4" width="2.5" height="8" rx=".5" fill="currentColor"/><rect x="9.5" y="1.5" width="2.5" height="10.5" rx=".5" fill="currentColor"/></svg>
+          Workload
+        </button>
+        <button class="pill-btn" onclick="openProfiles()" title="Perfis do time">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="4" r="2.2" stroke="currentColor" stroke-width="1.1"/><path d="M2 11.5c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+          Perfis
+        </button>
+        <button class="pill-btn" onclick="openTeam()" title="Editar time">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="5" cy="4" r="2" stroke="currentColor" stroke-width="1.1"/><path d="M1 11c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="10" y1="4" x2="10" y2="8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="8" y1="6" x2="12" y2="6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+          Time
+        </button>
+        <button class="pill-btn" onclick="openLog()" id="btnLog">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1.5" y="1.5" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.1"/><line x1="4" y1="4.5" x2="9" y2="4.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="4" y1="6.5" x2="9" y2="6.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="4" y1="8.5" x2="7" y2="8.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+          Log
+        </button>
+        <button class="btn-acc" onclick="openModal(null)">+ Nova</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BODY ═══ -->
+<div class="body">
+  <div class="stats" id="stats"></div>
+
+  <div class="filter-bar">
+    <div class="filter-row">
+      <div class="fgroup" id="fgroupCat">
+        <button class="fgroup-label" onclick="toggleCatOpen()">
+          CASAS
+          <span class="fgroup-arr"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 3.5l4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </button>
+        <div class="fgroup-div"></div>
+        <div class="fpills" id="catPills"></div>
+      </div>
+      <div id="catChip"></div>
+      <div class="search-wrap" id="srchWrap">
+        <button class="search-icon-btn" onclick="toggleSearch()" title="Buscar">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="currentColor" stroke-width="1.2"/><line x1="8.5" y1="8.5" x2="11.5" y2="11.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </button>
+        <input class="search-inp" id="srch" type="search" placeholder="Buscar projeto..." oninput="render()" onblur="if(!this.value)setTimeout(()=>{if(srchOpen)toggleSearch()},150)"/>
+      </div>
+    </div>
+    <div class="filter-row">
+      <div class="fgroup" id="fgroupResp">
+        <button class="fgroup-label" onclick="toggleRespOpen()">
+          TIME
+          <span class="fgroup-arr"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 3.5l4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </button>
+        <div class="fgroup-div"></div>
+        <div class="fpills" id="respPills"></div>
+      </div>
+      <div id="respChip"></div>
+    </div>
+  </div>
+
+  <div id="taskList"></div>
+</div>
+
+<!-- ═══ TASK MODAL ═══ -->
+<div class="overlay hidden" id="taskOverlay" onclick="if(event.target===this)closeTask()">
+  <div class="modal">
+    <h2 id="taskModalTitle">Nova demanda</h2>
+    <input type="hidden" id="eId"/>
+    <div class="field"><label>Título</label><input type="text" id="fTitle" placeholder="Nome do projeto…"/></div>
+    <div class="field"><label>Descrição</label><textarea id="fDesc" rows="2" placeholder="Detalhes…"></textarea></div>
+    <div class="field"><label>Categoria</label><select id="fCat"></select></div>
+    <div class="field">
+      <label>Responsáveis</label>
+      <div class="multi-wrap" id="multiWrap" onclick="toggleDrop()"></div>
+      <div class="multi-dropdown" id="multiDrop"></div>
+    </div>
+    <div class="field"><label>Status</label>
+      <select id="fStatus">
+        <option value="pendente">Pendente</option>
+        <option value="em andamento">Em andamento</option>
+        <option value="concluído">Concluído</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="field" style="flex:1"><label>Data de entrega</label><input type="date" id="fDate"/></div>
+      <div class="field" style="flex:1"><label>Data de apresentação</label><input type="date" id="fPresent"/></div>
+    </div>
+    <div class="field"><label>Porte do projeto</label>
+      <select id="fSize">
+        <option value="P">Pequeno</option>
+        <option value="M">Médio</option>
+        <option value="G">Grande</option>
+      </select>
+    </div>
+    <div class="field">
+      <label style="display:flex;align-items:center;gap:9px;cursor:pointer;margin-bottom:0">
+        <input type="checkbox" id="fWon" style="width:auto;margin:0;cursor:pointer;accent-color:var(--pur)"/>
+        <span>Foi uma concorrência ganha</span>
+      </label>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeTask()">Cancelar</button>
+      <button class="btn-save" onclick="saveTask()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TEAM MODAL ═══ -->
+<div class="overlay hidden" id="teamOverlay" onclick="if(event.target===this)closeTeam()">
+  <div class="modal">
+    <h2>Editar time</h2>
+    <p style="font-size:13px;color:var(--txs);margin-bottom:16px;line-height:1.5">Renomeie, adicione ou remova membros. Clique no avatar para editar cor e ícone.</p>
+    <div class="team-list" id="teamList"></div>
+    <button class="btn-add-member" onclick="addMember()">+ Adicionar membro</button>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeTeam()">Fechar</button>
+      <button class="btn-save" onclick="saveTeam()">Salvar time</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ AVATAR EDITOR ═══ -->
+<div class="overlay hidden" id="avOverlay" onclick="if(event.target===this)closeAv()">
+  <div class="modal" style="max-width:360px">
+    <h2>Editar avatar</h2>
+    <div class="av-preview-wrap"><div class="av-preview-lg" id="avPreviewLg"></div></div>
+    <div class="field">
+      <label>Cor</label>
+      <div class="color-swatches" id="colorSwatches"></div>
+      <input type="color" id="customColor" oninput="setAvColor(this.value)" style="width:100%;height:36px;border-radius:8px;border:1px solid var(--bord);cursor:pointer;padding:2px 4px;background:var(--surf2)"/>
+    </div>
+    <div class="field">
+      <label>Ícone SVG (opcional)</label>
+      <div class="upload-svg-row">
+        <button class="btn-upload" onclick="document.getElementById('svgUpload').click()">Upload SVG</button>
+        <button class="btn-remove-svg" id="removeSvgBtn" onclick="removeAvSvg()" style="display:none">Remover</button>
+      </div>
+      <input type="file" id="svgUpload" accept=".svg,image/svg+xml" style="display:none" onchange="handleSvg(event)"/>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeAv()">Cancelar</button>
+      <button class="btn-save" onclick="saveAv()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LOG MODAL ═══ -->
+<div class="overlay hidden" id="logOverlay" onclick="if(event.target===this)closeLog()">
+  <div class="modal" style="max-width:480px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <h2 style="margin:0">Log de atividades</h2>
+      <span id="logCount" style="font-size:11px;color:var(--txt)"></span>
+    </div>
+    <div class="log-list" id="logList"></div>
+    <button class="log-clear" onclick="clearLog()">Limpar histórico</button>
+    <div class="modal-btns" style="margin-top:12px">
+      <button class="btn-save" style="flex:1" onclick="closeLog()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROFILES MODAL ═══ -->
+<div class="overlay hidden" id="profilesOverlay" onclick="if(event.target===this)closeProfiles()">
+  <div class="modal" style="max-width:600px">
+    <h2>Perfis do time</h2>
+    <p style="font-size:13px;color:var(--txs);margin-bottom:18px;line-height:1.5">Métricas de cada membro. Clique em qualquer campo editável para alterar.</p>
+    <div id="profilesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px"></div>
+    <div class="modal-btns" style="margin-top:20px">
+      <button class="btn-save" style="flex:1" onclick="closeProfiles()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ WORKLOAD MODAL ═══ -->
+<div class="overlay hidden" id="workloadOverlay" onclick="if(event.target===this)closeWorkload()">
+  <div class="modal" style="max-width:560px">
+    <div style="margin-bottom:6px">
+      <h2 style="margin:0">Carga de trabalho</h2>
+    </div>
+    <p style="font-size:12px;color:var(--txs);margin-bottom:20px;line-height:1.5">Demandas ativas (não concluídas) por pessoa.</p>
+    <div id="workloadBars"></div>
+    <div class="modal-btns" style="margin-top:20px">
+      <button class="btn-save" style="flex:1" onclick="closeWorkload()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TUTORIAL MODAL ═══ -->
+<div class="overlay hidden" id="tutOverlay" onclick="if(event.target===this)closeTut()">
+  <div class="modal" style="max-width:500px">
+    <h2>Como o time todo acessa</h2>
+    <p style="font-size:13px;color:var(--txs);margin-bottom:20px;line-height:1.5">O app está no GitHub Pages. Para sync em tempo real, configure o Firebase (gratuito). Depois basta compartilhar a URL.</p>
+    <div class="tut-step"><div class="tut-num">1</div><div class="tut-body"><h3>Configure o Firebase</h3><p>Abra <code>assets/app.js</code> e preencha <code>FIREBASE_CONFIG</code> com os dados do seu projeto Firebase.</p></div></div>
+    <div class="tut-step"><div class="tut-num">2</div><div class="tut-body"><h3>Suba no GitHub</h3><p>Faça commit e push. O GitHub Pages publica automaticamente em poucos segundos.</p></div></div>
+    <div class="tut-step"><div class="tut-num">3</div><div class="tut-body"><h3>Compartilhe a URL</h3><p>A URL do GitHub Pages fica no formato <code>usuario.github.io/repositorio</code>. Mande no grupo do time.</p></div></div>
+    <div class="tut-step"><div class="tut-num">4</div><div class="tut-body"><h3>Sync automático</h3><p>Qualquer alteração feita por qualquer pessoa aparece para todo o time em tempo real, sem precisar atualizar a página.</p></div></div>
+    <div class="tut-sep"></div>
+    <div class="tut-note">💡 <strong>Sem Firebase?</strong> O app funciona normalmente, mas os dados ficam salvos apenas no navegador de cada pessoa.</div>
+    <div class="modal-btns" style="margin-top:20px"><button class="btn-save" style="flex:1" onclick="closeTut()">Entendido</button></div>
+  </div>
+</div>
+
+<script src="assets/app.js" type="module"></script>
+</body>
+</html>
